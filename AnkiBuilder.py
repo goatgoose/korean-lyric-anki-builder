@@ -77,7 +77,7 @@ class AnkiBuilder:
                 fields=[term, translated[term]]
             ))
 
-        genanki.Package(deck).write_to_file(self.deck_name + ".apkg")
+        genanki.Package(deck).write_to_file("decks/" + self.deck_name + ".apkg")
 
 
 if __name__ == '__main__':
