@@ -12,6 +12,9 @@ class AnkiBuilder:
         self.genius = Genius("DhLgBRFiLg4HOiABUzSJvGjpTDgX6vwVSFvyV3P6igiKdAhNdvq0VbwnF8QEXxa0")
         self.translator = Translator()
 
+        self.songs = []
+        self.translated = {}
+
         self.model = genanki.Model(
             1313562696, "lyrics-model",
             fields=[
@@ -59,22 +62,31 @@ class AnkiBuilder:
 
         return lines
 
+    def add_song(self, song):
+        self.songs.append(song)
+
+    def translate(self, term):
+        if term not in self.translated:
+            self.translated[term] = self.translator.translate(term).text
+
     def build(self):
-        hangul = self.get_hangul_blocks(self.genius.search_song("likey", artist="TWICE"))
+        hangul = []
+        for song in self.songs:
+            hangul.append(self.get_hangul_blocks(song))
 
-        translated = {}
-        for line in hangul:
-            phrase = " ".join(line)
-            translated[phrase] = self.translator.translate(phrase).text
+        for song in hangul:
+            for line in song:
+                phrase = " ".join(line)
+                self.translate(phrase)
 
-            for block in line:
-                translated[block] = self.translator.translate(block).text
+                for block in line:
+                    self.translate(block)
 
         deck = genanki.Deck(self.deck_id, self.deck_name)
-        for term in translated:
+        for term in self.translated:
             deck.add_note(genanki.Note(
                 model=self.model,
-                fields=[term, translated[term]]
+                fields=[term, self.translated[term]]
             ))
 
         genanki.Package(deck).write_to_file("decks/" + self.deck_name + ".apkg")
@@ -82,4 +94,5 @@ class AnkiBuilder:
 
 if __name__ == '__main__':
     builder = AnkiBuilder("Likey", 1768730765)
+    builder.add_song(builder.genius.search_song("likey", artist="TWICE"))
     builder.build()
